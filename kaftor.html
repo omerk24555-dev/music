@@ -19,7 +19,8 @@ ol li{margin:8px 0}kbd{background:var(--card);border:1px solid var(--line);borde
   <div id="ok" hidden>
     <ol>
       <li>אם סרגל הסימניות לא מוצג: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (במק: <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
-      <li>לגרור את הכפתור הירוק לסרגל הסימניות:<br><a class="drag" id="bm" href="#">🎶 לינק לזוג</a></li>
+      <li>לגרור את הכפתור הירוק לסרגל הסימניות:<br><a class="drag" id="bm" href="#">🎶 לינק לזוג</a>
+        <br><span class="mut">או בלי גרירה: <button id="cp" style="font:inherit;font-weight:700;padding:6px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer">העתקת הקוד של הכפתור</button> ואז במנהל הסימניות (Add bookmark): בשם לכתוב "🎶 לינק לזוג", בשדה URL להדביק, ו-Save.</span></li>
       <li>ב-iPlan: לפתוח כרטיס אירוע של הזוג וללחוץ על "🎶 לינק לזוג" בסרגל.</li>
       <li>בחלון שנפתח לבדוק שמות, תאריך, דיג׳יי וטלפון – וללחוץ <b>שליחה בוואטסאפ</b>.</li>
     </ol>
@@ -36,6 +37,11 @@ ol li{margin:8px 0}kbd{background:var(--card);border:1px solid var(--line);borde
   const a = document.getElementById('bm');
   a.href = 'javascript:' + encodeURIComponent(code);
   a.onclick = e => { e.preventDefault(); alert('צריך לגרור את הכפתור לסרגל הסימניות, לא ללחוץ עליו כאן.'); };
+  document.getElementById('cp').onclick = async () => {
+    const b = document.getElementById('cp');
+    try { await navigator.clipboard.writeText(a.href); b.textContent = 'הועתק ✓ – עכשיו להדביק בשדה URL'; }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = a.href; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); b.textContent = 'הועתק ✓ – עכשיו להדביק בשדה URL'; }
+  };
   document.getElementById('ok').hidden = false;
 })();
 </script>
