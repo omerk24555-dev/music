@@ -37,7 +37,7 @@ body.busy #list{opacity:.45;pointer-events:none}
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbykhlZR0j8kdNRAeC3wV8OhBTh97AkPHpMw8QgGTO6vbx_MxEXWdBzO23G_kBAQtsJL/exec';
 const q = new URLSearchParams(location.search), T = q.get('t'), K = q.get('k'), C = q.get('c');
-const LINK = C ? { c: C } : { t: T, k: K };
+const LINK = C ? { code: C } : { t: T, k: K };
 const app = document.getElementById('app');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function call(params) {
