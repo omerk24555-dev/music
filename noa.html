@@ -56,19 +56,20 @@ let DATA = null, F = '', DJN = {};
 function msg(r) { return `היי ${r.n}! 🎶\nהחתונה שלכם${r.v ? ' ב' + r.v : ''} מתקרבת, והגיע הזמן לקבוע פגישת תיאום מוזיקה עם ${DJN[r.dj] || ''}.\nבלינק הזה תוכלו לבחור מועד שנוח לכם:\n${r.link}\n\nנועה, מנהלת משרד`; }
 function card(r, today) {
   const days = Math.round((pd(r.d) - today) / 864e5);
-  const ST = { pending: ['ממתין לאישור','st-pnd'], approved: ['נקבע','st-ok'], rejected: ['נדחה – הלינק נעול','st-bad'] };
+  const ST = { pending: ['ממתין לאישור','st-pnd'], approved: ['נקבע דרך הלינק','st-ok'], rejected: ['נדחה – הלינק נעול','st-bad'], iplan: ['יש פגישה ב-iPlan','st-ok'] };
+  const canReset = /^(pending|approved|rejected)$/.test(r.state);
   const st = r.state ? ST[r.state] || ['נקבע','st-ok'] : r.sent ? ['נשלח ' + sd(r.sent), 'st-sent'] : ['לא נשלח', 'st-none'];
   const ph = String(r.p || '').replace(/\D/g, '').replace(/^0/, '972');
   const wa = 'https://wa.me/' + (ph.length >= 11 ? ph : '') + '?text=' + encodeURIComponent(msg(r));
   return `<article class="ev${r._due ? ' due' : ''}" data-dj="${esc(r.dj)}" data-q="${esc((r.n + ' ' + r.v).toLowerCase())}" data-id="${esc(r.id)}" data-d="${esc(r.d)}">
     <div class="top"><b class="nm">${esc(r.n)}</b><span class="st ${st[1]}">${esc(st[0])}</span></div>
     <div class="meta">${HD[pd(r.d).getDay()]} ${sd(r.d)} · ${esc(r.v)} · ${esc(DJN[r.dj] || r.dj)} · בעוד ${days} ימים</div>
-    ${r.label ? `<div class="meta lb">מועד שנבחר: <b>${esc(r.label)}</b></div>` : ''}
+    ${r.label ? `<div class="meta lb">${r.state === 'iplan' ? 'פגישת תיאום' : 'מועד שנבחר'}: <b>${esc(r.label)}</b></div>` : ''}
     <div class="acts">
       ${r.state ? '' : `<a class="b wa" href="${wa}" target="_blank" rel="noopener">וואטסאפ${ph.length >= 11 ? ' לזוג' : ''}</a>`}
       <button class="b" data-copy="1">העתקת הודעה</button>
       <button class="b" data-copy="2">העתקת לינק</button>
-      ${r.state ? '<button class="b rs">ריסטארט</button>' : ''}
+      ${canReset ? '<button class="b rs">ריסטארט</button>' : ''}
     </div>
     <p class="note" hidden></p>
   </article>`;
