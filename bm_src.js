@@ -9,7 +9,7 @@ const date=ed.length?ed[3]+'-'+ed[2]+'-'+ed[1]:'';
 const ci=T.indexOf('אנשי קשר'),ce=T.indexOf('לקוחות',ci);const cb=ci>=0?T.slice(ci,ce>0?ce:ci+1500):'';
 const emails=[...new Set(cb.match(/[\w.+-]+@[\w-]+\.[\w.]+/g)||[])];
 const phones=[...new Set((cb.match(/0\d{1,2}-?\d{3}-?\d{4}/g)||[]).map(p=>p.replace(/\D/g,'')))].filter(p=>p.length===10);
-const guess=(DJ.find(d=>d[0]!=='omer'&&T.includes(d[2]))||DJ[3])[0];
+const djf=((T.match(/(?:^|\n)\s*dj\s*\n\s*([^\n]+)/i)||[])[1]||'').trim();if(/דינו/.test(djf)){alert('זה אירוע של דינו – לזוגות של דינו לא שולחים לינק לתיאום.');return}const guess=(DJ.find(d=>djf.includes(d[2]))||DJ[3])[0];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 document.getElementById('mu-box')?.remove();const box=document.createElement('div');box.id='mu-box';box.dir='rtl';
 box.style.cssText='position:fixed;z-index:99999;top:20px;left:50%;transform:translateX(-50%);width:min(460px,94vw);background:#fff;border:1px solid #ccc;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.3);padding:16px;font:15px/1.5 Arial,sans-serif;color:#222';
