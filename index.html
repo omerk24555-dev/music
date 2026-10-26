@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>פגישת תיאום מוזיקה</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="common.css">
+<style>
+.ask{font-size:19px;font-weight:700;margin:18px 0 6px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:12px 0}
+.day h2{font-size:15px;margin:0 0 8px;color:var(--mut);font-weight:600}
+.slots{display:flex;flex-wrap:wrap;gap:8px}
+.slot{font:inherit;font-variant-numeric:tabular-nums;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer;min-height:40px}
+.slot:hover,.slot:focus-visible{border-color:var(--ac);outline:none}
+.slot.sel{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.sheet{position:fixed;inset:auto 0 0 0;background:var(--card);border-top:1px solid var(--line);padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.12)}
+.sheet .in{max-width:560px;margin:0 auto}
+.go{font:inherit;font-weight:700;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:12px 20px;cursor:pointer}
+.go:disabled{opacity:.6}
+.ghost{font:inherit;background:none;border:0;color:var(--mut);cursor:pointer;margin-inline-start:12px;padding:12px 4px}
+.err{color:var(--bad-fg)}
+.bring{margin:4px 0 8px;padding-inline-start:20px}.bring li{margin:2px 0}
+body.busy #list{opacity:.45;pointer-events:none}
+</style>
+</head>
+<body>
+<main id="app"><p class="wait"><span class="spin"></span>טוענים את השעות הפנויות…</p></main>
+<div class="sheet" id="sheet" hidden><div class="in">
+  <p>לקבוע את הפגישה ל<b id="lbl"></b>?</p>
+  <p id="msg" class="err" hidden></p>
+  <button class="go" id="go">כן, לקבוע</button><button class="ghost" id="no">לבחור שעה אחרת</button>
+  <p id="wait" class="wait" hidden><span class="spin"></span>קובעים את הפגישה, זה לוקח כמה שניות. נא לא לסגור את הדף.</p>
+</div></div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbykhlZR0j8kdNRAeC3wV8OhBTh97AkPHpMw8QgGTO6vbx_MxEXWdBzO23G_kBAQtsJL/exec';
+const q = new URLSearchParams(location.search), T = q.get('t'), K = q.get('k');
+const app = document.getElementById('app');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function call(params) {
+  const u = API + '?' + new URLSearchParams(params).toString();
+  const r = await fetch(u, { credentials: 'omit', redirect: 'follow' });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'שגיאה');
+  return j;
+}
+function tel(n) { return `<a class="tel" href="tel:${n.replace(/-/g,'')}">${esc(n)}</a>`; }
+function done(info) {
+  const b = info.booking;
+  const details = `<div class="card"><b>${esc(b.label)}</b><br>פגישת תיאום מוזיקה עם ${esc(info.dj)} · כשעה<br><span class="mut">${esc(info.address)}</span><br><a href="${esc(info.maps)}" target="_blank" rel="noopener">ניווט למשרד</a></div>`;
+  const change = `<p><b>התאריך לא מתאים?</b> אין בעיה! אפשר להתקשר ישירות לנועה, מנהלת המשרד, לתיאום מחדש: ${tel(info.noa)}</p>`;
+  if (b.state === 'rejected') return `<div class="status bad"><h2>המועד אינו זמין – בואו נתאם מועד חדש</h2><p>היי ${esc(info.n)}, המועד ב${esc(b.label)} כבר תפוס.</p><p>נועה, מנהלת המשרד, תפנה אליכם בהקדם. ליצירת קשר: ${tel(info.noa)}</p></div>`;
+  if (b.state === 'pending') return `<div class="status pending"><h2>בקשתכם התקבלה</h2><p>היי ${esc(info.n)}, נועה, מנהלת המשרד, תאשר את המועד ותשלח לכם זימון.</p></div>${details}${change}`;
+  return `<div class="status ok"><h2>איזה כיף, הפגישה נקבעה!</h2><p>היי ${esc(info.n)}, הפגישה שלכם עם ${esc(info.dj)} נקבעה. זימון מסודר יגיע אליכם למייל.</p>
+    <p><b>📌 מה חשוב להביא לפגישה?</b></p><ul class="bring"><li>אישור תשלום אקו"ם</li><li>צ'ק דחוי (מתוארך עד 7 ימים לאחר מועד האירוע)</li></ul>
+    <p>עדיין לא שילמתם אקו"ם? אפשר לשלם בקלות <a href="${esc(info.acum)}" target="_blank" rel="noopener">בלחיצה כאן</a>.</p></div>${details}${change}`;
+}
+function render(j) {
+  const info = j.info;
+  document.title = 'פגישת תיאום מוזיקה – ' + info.n;
+  if (info.booking) { app.innerHTML = done(info); return; }
+  const by = {};
+  j.slots.forEach(s => (by[s.dk] = by[s.dk] || { day: s.day, list: [] }).list.push(s));
+  const days = Object.keys(by).sort().map(k => `<section class="day"><h2>${esc(by[k].day)}</h2><div class="slots">` +
+    by[k].list.map(s => `<button class="slot" data-t="${s.t}" data-l="${esc(s.label)}">${s.time}</button>`).join('') + `</div></section>`).join('');
+  app.innerHTML = `<h1>היי ${esc(info.n)}!</h1>
+    <p>${esc(info.ev)} שלכם${info.v ? ' ב' + esc(info.v) : ''} מתקרבת, והגיע הזמן לקבוע פגישת תיאום מוזיקה עם ${esc(info.dj)} 🥳</p>
+    <p class="ask">מתי נוח לכם?</p>
+    <div id="list">${days || `<div class="status pending"><p>כרגע אין שעות פנויות באתר. נועה, מנהלת המשרד, תשמח לתאם איתכם: ${tel(info.noa)}</p></div>`}</div>
+    <p class="mut">אף שעה לא מתאימה? אפשר לתאם ישירות עם נועה: ${tel(info.noa)}</p>`;
+  let pick = null;
+  const sheet = document.getElementById('sheet'), go = document.getElementById('go'), no = document.getElementById('no'), msg = document.getElementById('msg'), wait = document.getElementById('wait');
+  app.querySelectorAll('.slot').forEach(b => b.onclick = () => {
+    app.querySelectorAll('.slot.sel').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel'); pick = b.dataset.t;
+    document.getElementById('lbl').textContent = b.dataset.l; msg.hidden = true; sheet.hidden = false; go.focus();
+  });
+  no.onclick = () => { sheet.hidden = true; app.querySelectorAll('.slot.sel').forEach(x => x.classList.remove('sel')); pick = null; };
+  go.onclick = async () => {
+    if (!pick) return;
+    go.disabled = true; no.hidden = true; wait.hidden = false; msg.hidden = true; document.body.classList.add('busy');
+    try {
+      const r = await call({ api: 'book', t: T, k: K, s: pick });
+      sheet.hidden = true; document.body.classList.remove('busy'); app.innerHTML = done(r.info); scrollTo(0, 0);
+    } catch (e) {
+      document.body.classList.remove('busy'); go.disabled = false; no.hidden = false; wait.hidden = true;
+      msg.textContent = e.message || 'משהו השתבש, נסו שוב'; msg.hidden = false;
+      if (/תפוסה|לא פנויה/.test(e.message)) load();
+    }
+  };
+}
+async function load() {
+  if (!T || !K) { app.innerHTML = '<h1>הלינק לא שלם</h1><p>אפשר לפנות לנועה, מנהלת המשרד: ' + tel('050-5819960') + '</p>'; return; }
+  try { render(await call({ api: 'info', t: T, k: K })); }
+  catch (e) { app.innerHTML = `<h1>לא הצלחנו לפתוח את הלינק</h1><p>${esc(e.message)}</p><p>אפשר לפנות לנועה, מנהלת המשרד: ${tel('050-5819960')}</p>`; }
+}
+load();
+</script>
+</body>
+</html>
