@@ -42,6 +42,7 @@ h2.sec{font-size:17px;margin:22px 0 4px}
 </main>
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbykhlZR0j8kdNRAeC3wV8OhBTh97AkPHpMw8QgGTO6vbx_MxEXWdBzO23G_kBAQtsJL/exec';
+const HQ = new URLSearchParams(location.hash.slice(1)).get('q') || '';
 const K = new URLSearchParams(location.hash.slice(1)).get('k') || new URLSearchParams(location.search).get('k') || '';
 const out = document.getElementById('out');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -53,7 +54,7 @@ const HD = ['יום א׳','יום ב׳','יום ג׳','יום ד׳','יום ה׳
 const pd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
 const sd = s => { const [y,m,d] = s.split('-'); return `${+d}.${+m}.${y.slice(2)}`; };
 let DATA = null, F = '', DJN = {};
-function msg(r) { return `היי ${r.n}! 🎶\nהחתונה שלכם${r.v ? ' ב' + r.v : ''} מתקרבת, והגיע הזמן לקבוע פגישת תיאום מוזיקה עם ${DJN[r.dj] || ''}.\nבלינק הזה תוכלו לבחור מועד שנוח לכם:\n${r.link}\n\nנועה, מנהלת משרד`; }
+function msg(r) { return `היי ${r.n}!\nהחתונה שלכם מתקרבת, והגיע הזמן לקבוע פגישת תיאום מוזיקה עם ${DJN[r.dj] || ''}.\nבלינק הזה תוכלו לבחור מועד שנוח לכם:\n${r.link}\n\nנועה, מנהלת משרד`; }
 function card(r, today) {
   const days = Math.round((pd(r.d) - today) / 864e5);
   const ST = { pending: ['ממתין לאישור','st-pnd'], approved: ['נקבע דרך הלינק','st-ok'], rejected: ['נדחה – הלינק נעול','st-bad'], iplan: ['יש פגישה ב-iPlan','st-ok'] };
@@ -124,6 +125,7 @@ function bind() {
     document.getElementById('chips').innerHTML = '<button class="chip on" data-f="">כולם</button>' + DATA.djs.map(d => `<button class="chip" data-f="${d.k}">${esc(d.name)}</button>`).join(' ');
     document.querySelectorAll('.chip').forEach(c => c.onclick = () => { document.querySelectorAll('.chip').forEach(x => x.classList.remove('on')); c.classList.add('on'); F = c.dataset.f; draw(); });
     document.getElementById('q').oninput = draw;
+    if (HQ) document.getElementById('q').value = HQ;
     document.getElementById('tools').hidden = false;
     draw();
   } catch (e) { out.innerHTML = `<div class="status bad"><p>לא הצלחתי לטעון: ${esc(e.message)}</p></div>`; }

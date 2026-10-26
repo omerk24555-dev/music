@@ -36,7 +36,8 @@ body.busy #list{opacity:.45;pointer-events:none}
 </div></div>
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbykhlZR0j8kdNRAeC3wV8OhBTh97AkPHpMw8QgGTO6vbx_MxEXWdBzO23G_kBAQtsJL/exec';
-const q = new URLSearchParams(location.search), T = q.get('t'), K = q.get('k');
+const q = new URLSearchParams(location.search), T = q.get('t'), K = q.get('k'), C = q.get('c');
+const LINK = C ? { c: C } : { t: T, k: K };
 const app = document.getElementById('app');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function call(params) {
@@ -66,7 +67,7 @@ function render(j) {
   const days = Object.keys(by).sort().map(k => `<section class="day"><h2>${esc(by[k].day)}</h2><div class="slots">` +
     by[k].list.map(s => `<button class="slot" data-t="${s.t}" data-l="${esc(s.label)}">${s.time}</button>`).join('') + `</div></section>`).join('');
   app.innerHTML = `<h1>היי ${esc(info.n)}!</h1>
-    <p>${esc(info.ev)} שלכם${info.v ? ' ב' + esc(info.v) : ''} מתקרבת, והגיע הזמן לקבוע פגישת תיאום מוזיקה עם ${esc(info.dj)} 🥳</p>
+    <p>${esc(info.ev)} שלכם מתקרבת, והגיע הזמן לקבוע פגישת תיאום מוזיקה עם ${esc(info.dj)} 🥳</p>
     <p class="ask">מתי נוח לכם?</p>
     <div id="list">${days || `<div class="status pending"><p>כרגע אין שעות פנויות באתר. נועה, מנהלת המשרד, תשמח לתאם איתכם: ${tel(info.noa)}</p></div>`}</div>
     <p class="mut">אף שעה לא מתאימה? אפשר לתאם ישירות עם נועה: ${tel(info.noa)}</p>`;
@@ -82,7 +83,7 @@ function render(j) {
     if (!pick) return;
     go.disabled = true; no.hidden = true; wait.hidden = false; msg.hidden = true; document.body.classList.add('busy');
     try {
-      const r = await call({ api: 'book', t: T, k: K, s: pick });
+      const r = await call(Object.assign({ api: 'book', s: pick }, LINK));
       sheet.hidden = true; document.body.classList.remove('busy'); app.innerHTML = done(r.info); scrollTo(0, 0);
     } catch (e) {
       document.body.classList.remove('busy'); go.disabled = false; no.hidden = false; wait.hidden = true;
@@ -92,8 +93,8 @@ function render(j) {
   };
 }
 async function load() {
-  if (!T || !K) { app.innerHTML = '<h1>הלינק לא שלם</h1><p>אפשר לפנות לנועה, מנהלת המשרד: ' + tel('050-5819960') + '</p>'; return; }
-  try { render(await call({ api: 'info', t: T, k: K })); }
+  if (!C && (!T || !K)) { app.innerHTML = '<h1>הלינק לא שלם</h1><p>אפשר לפנות לנועה, מנהלת המשרד: ' + tel('050-5819960') + '</p>'; return; }
+  try { render(await call(Object.assign({ api: 'info' }, LINK))); }
   catch (e) { app.innerHTML = `<h1>לא הצלחנו לפתוח את הלינק</h1><p>${esc(e.message)}</p><p>אפשר לפנות לנועה, מנהלת המשרד: ${tel('050-5819960')}</p>`; }
 }
 load();
